@@ -122,27 +122,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // 이전 버튼 (<): 1페이지일 때 숨김 처리
         if (currentArtworkId === 1) {
             prevArtworkButton.classList.add('hidden');
+            prevArtworkButton.disabled = true; // 숨김 상태이므로 비활성화
         } else {
             prevArtworkButton.classList.remove('hidden');
+            prevArtworkButton.disabled = false; // 보임 상태이므로 활성화
         }
 
-        // 다음 버튼 (>):
-        // 마지막 페이지일 때 숨김 처리 (opacity: 0) 및 클릭 불가
+        // 다음 버튼 (>): 마지막 페이지일 때 숨김 처리
         if (currentArtworkId === artworks.length) {
             nextArtworkButton.classList.add('hidden');
-            nextArtworkButton.disabled = true; // 클릭 비활성화 (hidden이 pointer-events:none을 포함하지만 명시적으로)
+            nextArtworkButton.disabled = true; // 숨김 상태이므로 비활성화
         } else {
-            // 그 외의 경우 (마지막 페이지가 아닐 때): 항상 보이게 (opacity: 1) 및 클릭 가능
             nextArtworkButton.classList.remove('hidden');
-            nextArtworkButton.disabled = false; // 클릭 활성화
+            nextArtworkButton.disabled = false; // 보임 상태이므로 활성화
         }
     }
 
     function navigateToArtwork(id) {
-        // 작품 ID 유효성 검사 추가 (첫 작품 < id < 마지막 작품)
+        // 작품 ID 유효성 검사 추가 (1 <= id <= artworks.length)
         if (id < 1 || id > artworks.length) {
             console.warn(`유효하지 않은 작품 ID: ${id}`);
-            return;
+            return; // 유효하지 않은 ID면 함수 종료
         }
 
         currentArtworkId = id;
@@ -153,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const newPath = `/artwork/${id}`;
             const hashUrl = `#${newPath}`;
 
+            // 현재 URL 해시와 다를 때만 history.replaceState 호출
             if (window.location.hash !== hashUrl) {
                 history.replaceState({ page: id }, '', hashUrl);
             }
@@ -211,8 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
             artworkImage.style.display = 'none';
             enlargeButton.style.display = 'none';
             paginationContainer.style.display = 'none';
-            prevArtworkButton.style.display = 'none'; // 버튼 숨김
-            nextArtworkButton.style.display = 'none'; // 버튼 숨김
+            prevArtworkButton.style.display = 'none'; // 데이터 로드 실패 시 버튼 숨김
+            nextArtworkButton.style.display = 'none'; // 데이터 로드 실패 시 버튼 숨김
             imageLoadError.style.display = 'block';
             imageLoadError.textContent = "데이터 로딩 오류: " + error.message;
         });
