@@ -367,19 +367,23 @@ p.artwork-artist {
     height: 100%;
 }
 
-.pagination-nav-button:hover:not(:disabled) {
-    color: #888;
+/* [수정됨] hover/focus/active 시 색상 변화를 막습니다. */
+.pagination-nav-button:hover:not(:disabled),
+.pagination-nav-button:focus:not(:disabled),
+.pagination-nav-button:active:not(:disabled) {
+    color: var(--text-color-primary); /* 활성 상태에서 색상이 변하지 않도록 고정 */
 }
+
 
 /* [수정됨] disabled 상태의 버튼 스타일: 색상, 투명도 변화 없음, 클릭만 방지 */
 .pagination-nav-button:disabled {
     cursor: default;
     pointer-events: none; /* 클릭 이벤트만 방지 */
-    /* color나 opacity는 hidden 클래스로 제어하거나 변경하지 않음 */
-    /* 여기에 다른 시각적 변화를 주지 않음 */
+    /* 여기에 color나 opacity를 추가하지 않습니다. */
+    /* 시각적인 변화는 hidden 클래스로만 제어합니다. */
 }
 
-/* 특정 버튼 (이전/다음 버튼 모두)을 숨길 때 사용할 클래스 */
+/* 이전/다음 버튼을 숨길 때 사용할 클래스 */
 .pagination-nav-button.hidden {
     opacity: 0;
     pointer-events: none; /* 숨겨진 상태에서도 클릭 불가 */
