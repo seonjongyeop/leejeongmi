@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageLoadError = document.getElementById('image-load-error');
 
     const scrollableContainer = document.querySelector('.gallery-main-container');
+    const modalContent = document.querySelector('.modal-content'); // 모달 콘텐츠 영역
 
     let artworks = [];
     let currentArtworkId = 1;
@@ -45,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             artworkImage.src = artwork.thumbnail;
             artworkImage.alt = artwork.title;
-            // 작품 정보를 원하는 형식으로 조합하여 할당
             artworkDetailNumber.textContent = `${artwork.id}.`;
             artworkDetailTitle.textContent = `${artwork.artist}, ‹${artwork.title}›(${artwork.year})`;
             artworkDetailArtist.textContent = `${artwork.material}, ${artwork.size}`;
@@ -104,13 +104,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (artwork) {
             renderArtwork(artwork);
             renderPagination();
-            // [수정] URL 변경 로직: GitHub Pages 호환을 위해 해시 기반 URL 사용
-            const newPath = `/artwork/${id}`; // 해시 뒤에 붙일 경로 (예: #/artwork/7)
+            const newPath = `/artwork/${id}`;
             const hashUrl = `#${newPath}`;
 
-            // 현재 URL의 해시가 이미 원하는 경로와 같다면 변경하지 않음
             if (window.location.hash !== hashUrl) {
-                // replaceState를 사용하여 브라우저 히스토리 스택에 새 항목을 추가하지 않고 현재 항목을 대체
                 history.replaceState({ page: id }, '', hashUrl);
             }
             if (scrollableContainer) {
@@ -119,7 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             console.error(`데이터에서 ID ${id}의 작품을 찾을 수 없습니다.`);
             renderArtwork(null);
-            // 작품을 찾을 수 없는 경우에도 해시 경로를 업데이트
             history.replaceState({ page: id }, '', `#/artwork/not-found`);
         }
     }
@@ -133,11 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(data => {
             artworks = data;
-
-            // [수정] 초기 URL 파싱 로직: window.location.pathname 대신 window.location.hash 사용
-            // 예: URL이 'leejeongmi.kr/#/artwork/7'일 경우 hashSegments는 ["#", "artwork", "7"]
             const hashSegments = window.location.hash.split('/');
-            const lastHashSegment = hashSegments[hashSegments.length - 1]; // "7"
+            const lastHashSegment = hashSegments[hashSegments.length - 1];
 
             let initialId = 1;
 
@@ -151,8 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             navigateToArtwork(currentArtworkId);
 
-            // [수정] popstate 이벤트 핸들러: history.replaceState로 해시를 사용하므로
-            // 초기 로드 시의 파싱과 동일하게 hash를 기반으로 동작하도록 함.
             window.addEventListener('popstate', (event) => {
                 const popStateHashSegments = window.location.hash.split('/');
                 const popStateLastSegment = popStateHashSegments[popStateHashSegments.length - 1];
@@ -164,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         popStateId = parsedId;
                     }
                 }
-                currentArtworkId = popStateId; // 현재 작품 ID 업데이트
+                currentArtworkId = popStateId;
 
                 const artwork = artworks.find(a => a.id === currentArtworkId);
                 if (artwork) {
@@ -241,9 +232,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let translateY = 0;
     let isDragging = false;
     let startX, startY; // 마우스 클릭 시작점 또는 터치 드래그 시작점 (translate 값을 기준으로 함)
+    // 확대/축소 시 이미지 내에서 고정할 지점의 상대 좌표 (0~1)
+    let zoomPointX = 0.5;
+    let zoomPointY = 0.5;
 
     function applyTransform() {
-        // transform-origin: 50% 50%이므로, translate는 이미지의 중심을 이동시킴
         enlargedImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
         enlargedImage.style.cursor = scale > 1 ? 'grab' : 'default';
     }
@@ -255,72 +248,162 @@ document.addEventListener('DOMContentLoaded', () => {
         applyTransform();
     }
 
+    function limitPan() {
+        const modalRect = modalContent.getBoundingClientRect(); // 모달 콘텐츠 영역 크기
+        const imageNaturalWidth = enlargedImage.naturalWidth; // 이미지 원본 너비
+        const imageNaturalHeight = enlargedImage.naturalHeight; // 이미지 원본 높이
+
+        // 현재 스케일에 따른 이미지의 논리적 크기
+        const scaledWidth = imageNaturalWidth * scale;
+        const scaledHeight = imageNaturalHeight * scale;
+
+        // 이미지의 현재 렌더링된 크기 (CSS max-width/max-height 적용 후)
+        // enlargedImage.getBoundingClientRect()는 이 값을 반환
+        const currentRenderedWidth = enlargedImage.getBoundingClientRect().width;
+        const currentRenderedHeight = enlargedImage.getBoundingClientRect().height;
+
+        // 이미지와 모달의 비율 차이를 고려하여 실제 이미지의 표시 영역 계산
+        // object-fit: contain 에 의해 이미지의 실제 표시 크기는 modalContent에 맞춰 조정됨
+        const modalRatio = modalRect.width / modalRect.height;
+        const imageRatio = imageNaturalWidth / imageNaturalHeight;
+
+        let actualImageDisplayWidth = currentRenderedWidth;
+        let actualImageDisplayHeight = currentRenderedHeight;
+
+        if (imageRatio > modalRatio) { // 이미지가 모달보다 가로로 김 (모달 높이에 맞춰짐)
+             actualImageDisplayHeight = modalRect.width / imageRatio; // 모달 너비에 맞춘 높이
+             actualImageDisplayWidth = modalRect.width;
+        } else { // 이미지가 모달보다 세로로 김 (모달 너비에 맞춰짐)
+             actualImageDisplayWidth = modalRect.height * imageRatio; // 모달 높이에 맞춘 너비
+             actualImageDisplayHeight = modalRect.height;
+        }
+
+        // 실제 이미지 표시 크기가 모달보다 작으면 패닝 제한을 0으로 설정하여 중앙에 고정
+        if (currentRenderedWidth <= modalRect.width && currentRenderedHeight <= modalRect.height) {
+            translateX = 0;
+            translateY = 0;
+            return;
+        }
+        
+        // 현재 스케일과 `object-fit: contain`에 의해 결정된 이미지의 "렌더링 기준 스케일"을 고려해야 함.
+        // 예를 들어, 이미지가 너무 커서 모달에 'contain'될 때, scale=1 이더라도 실제 렌더링 스케일은 1보다 작을 수 있음.
+        // 즉, getBoundingClientRect()로 얻은 이미지의 실제 너비/높이가 naturalWidth/naturalHeight * scale과 다를 수 있음.
+
+        // 실제 렌더링된 이미지의 크기
+        const imgRenderedWidth = enlargedImage.getBoundingClientRect().width;
+        const imgRenderedHeight = enlargedImage.getBoundingClientRect().height;
+
+        // 이미지가 실제로 렌더링되고 있는 크기를 기준으로 최대 이동 범위 계산
+        // 이 계산은 이미지의 현재 스케일이 아닌, `object-fit: contain`에 의해 최종적으로 결정된 크기를 반영
+        const maxPanX = Math.max(0, (imgRenderedWidth * scale - modalRect.width) / 2);
+        const maxPanY = Math.max(0, (imgRenderedHeight * scale - modalRect.height) / 2);
+
+        translateX = Math.max(-maxPanX, Math.min(translateX, maxPanX));
+        translateY = Math.max(-maxPanY, Math.min(translateY, maxPanY));
+    }
+
+
     enlargedImage.addEventListener('wheel', (event) => {
         event.preventDefault();
         const scaleAmount = 0.1;
         const oldScale = scale;
 
+        let newScale;
         if (event.deltaY < 0) { // 휠 업: 확대
-            scale += scaleAmount;
+            newScale = scale + scaleAmount;
         } else { // 휠 다운: 축소
-            scale -= scaleAmount;
+            newScale = scale - scaleAmount;
         }
 
-        scale = Math.max(0.5, Math.min(scale, 5)); // 최소 0.5배, 최대 5배 제한
+        newScale = Math.max(0.5, Math.min(newScale, 5));
 
-        const rect = enlargedImage.getBoundingClientRect();
+        if (newScale !== oldScale) {
+            const rect = enlargedImage.getBoundingClientRect(); // 현재 렌더링된 이미지의 크기와 위치
 
-        // [수정] 문제 1 해결: 커서 위치를 이미지의 *현재 중심*을 기준으로 계산하여 확대/축소 기준점 보정
-        const mouseXRelativeToCenter = event.clientX - (rect.left + rect.width / 2);
-        const mouseYRelativeToCenter = event.clientY - (rect.top + rect.height / 2);
+            // 마우스 커서의 모달 콘텐츠 영역 내 상대 좌표
+            const mouseXInModal = event.clientX - modalContent.getBoundingClientRect().left;
+            const mouseYInModal = event.clientY - modalContent.getBoundingClientRect().top;
 
-        // 스케일 변경으로 인해 마우스 위치(중심 기준)가 얼마나 이동하는지 계산
-        const newMouseXRelativeToCenter = mouseXRelativeToCenter * (scale / oldScale);
-        const newMouseYRelativeToCenter = mouseYRelativeToCenter * (scale / oldScale);
+            // 현재 스케일에서의 이미지 중심 좌표 (모달 콘텐츠 내에서)
+            const currentImageCenterX = (rect.left + rect.width / 2) - modalContent.getBoundingClientRect().left;
+            const currentImageCenterY = (rect.top + rect.height / 2) - modalContent.getBoundingClientRect().top;
 
-        // 이 이동량의 차이를 이미지 이동(translate)으로 보정
-        translateX -= (newMouseXRelativeToCenter - mouseXRelativeToCenter);
-        translateY -= (newMouseYRelativeToCenter - mouseYRelativeToCenter);
+            // 마우스 커서 위치를 이미지의 transform-origin (중앙) 기준으로 변환
+            const pointX = (mouseXInModal - currentImageCenterX) / oldScale;
+            const pointY = (mouseYInModal - currentImageCenterY) / oldScale;
 
-        applyTransform();
+            // 새로운 translate 값 계산
+            translateX = mouseXInModal - (pointX * newScale + currentImageCenterX);
+            translateY = mouseYInModal - (pointY * newScale + currentImageCenterY);
+            
+            // 기존 translate 값에 현재 마우스 위치 보정을 더함 (가장 핵심적인 로직)
+            // transformedX = currentImageCenterX + currentTranslateX * currentScale + deltaX
+            // newTranslateX = currentTranslateX + ( (event.clientX - imageRect.left) / currentScale - (event.clientX - imageRect.left) / newScale )
+            // 이 방법이 가장 정확하고 보편적임.
+            
+            // 기존 translateX, translateY는 이미지 중심에서 얼마나 떨어져 있는지 나타내는 값.
+            // (transform-origin이 50% 50%이므로)
+            // 그래서 마우스 위치에서 현재 translateX, translateY를 빼서, 마우스가 이미지의 원본 좌표계에서
+            // 어느 지점에 해당하는지를 구하는게 더 직관적임.
+
+            // 현재 이미지의 원본 사이즈를 기준으로 계산된 좌표 (실제 이미지 픽셀 단위)
+            const originX = (event.clientX - rect.left - translateX); // translateX를 이미 적용한 상태의 마우스 위치
+            const originY = (event.clientY - rect.top - translateY);
+
+            const dx = (originX / oldScale) * (newScale - oldScale);
+            const dy = (originY / oldScale) * (newScale - oldScale);
+
+            translateX -= dx;
+            translateY -= dy;
+
+
+            scale = newScale;
+            limitPan();
+            applyTransform();
+        }
     });
 
     enlargedImage.addEventListener('mousedown', (event) => {
-        if (scale > 1) { // 확대된 상태에서만 드래그 가능
+        if (scale > 1) {
             isDragging = true;
-            // 현재 translate 값에서 마우스 클릭 위치를 빼서 드래그 시작점 설정
+            // 드래그 시작점을 현재 마우스 위치에서 이미 적용된 translate 값을 빼서 계산
             startX = event.clientX - translateX;
             startY = event.clientY - translateY;
             enlargedImage.style.cursor = 'grabbing';
-            enlargedImage.style.transition = 'none'; // 드래그 중 transition 비활성화
+            enlargedImage.style.transition = 'none';
         }
     });
 
     enlargedImage.addEventListener('mousemove', (event) => {
         if (!isDragging) return;
         event.preventDefault();
-        // 현재 마우스 위치에서 시작점을 빼서 새로운 translate 값 계산
+        // 새로운 translate 값을 계산
         translateX = event.clientX - startX;
         translateY = event.clientY - startY;
+        
+        limitPan();
         applyTransform();
     });
 
     enlargedImage.addEventListener('mouseup', () => {
         isDragging = false;
         enlargedImage.style.cursor = scale > 1 ? 'grab' : 'default';
-        enlargedImage.style.transition = 'transform 0.1s ease-out'; // 드래그 끝난 후 transition 활성화
+        enlargedImage.style.transition = 'transform 0.1s ease-out';
     });
 
     enlargedImage.addEventListener('mouseleave', () => {
         isDragging = false;
         enlargedImage.style.cursor = scale > 1 ? 'grab' : 'default';
-        enlargedImage.style.transition = 'transform 0.1s ease-out'; // 드래그 끝난 후 transition 활성화
+        enlargedImage.style.transition = 'transform 0.1s ease-out';
     });
 
-    let touchStartX = 0, touchStartY = 0; // 터치 드래그 시작점
-    let initialPinchDistance = 0; // 핀치 줌 시작 시 두 손가락 거리
-    let initialZoomScale = 1; // 핀치 줌 시작 시 스케일
-    let lastTapTime = 0; // 더블 탭 감지용
+    let touchStartX = 0, touchStartY = 0;
+    let initialPinchDistance = 0;
+    let initialZoomScale = 1;
+    let lastTapTime = 0;
+    // 핀치 줌 시작 시 이미지 내에서의 핀치 중심 상대 좌표 (0~1)
+    let pinchZoomPointX = 0.5; 
+    let pinchZoomPointY = 0.5;
 
     enlargedImage.addEventListener('touchstart', (event) => {
         if (event.touches.length === 1) {
@@ -330,67 +413,71 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTapTime;
-            if (tapLength < 300 && tapLength > 0) { // 더블 탭 감지 (300ms 이내)
-                event.preventDefault(); // 기본 더블 탭 줌 방지
-                resetZoomPan(); // 더블 탭 시 초기화
+            if (tapLength < 300 && tapLength > 0) {
+                event.preventDefault();
+                resetZoomPan();
             }
             lastTapTime = currentTime;
 
         } else if (event.touches.length === 2) {
-            isDragging = false; // 두 손가락 핀치 시 드래그 비활성화
+            isDragging = false;
             initialPinchDistance = getPinchDistance(event.touches);
             initialZoomScale = scale;
 
-            // 핀치 시작 시 두 손가락의 중심점 (이미지 요소의 좌측 상단 기준)
-            const midX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
-            const midY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
-
             const rect = enlargedImage.getBoundingClientRect();
-            // 핀치 시작 시 이미지 중심을 기준으로 한 두 손가락의 중심점 위치 저장
-            startX = midX - (rect.left + rect.width / 2); // startX는 이제 이미지 중심 기준
-            startY = midY - (rect.top + rect.height / 2); // startY는 이제 이미지 중심 기준
+            // 핀치 시작 시 두 손가락의 중심점 (모달 콘텐츠 내의 절대 좌표)
+            const pinchCenterX_abs = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+            const pinchCenterY_abs = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+            
+            // 이미지 엘리먼트 기준, 현재 translateX, translateY가 적용된 상태에서의 핀치 중심점.
+            // 이를 통해 핀치 중심이 이미지의 어떤 '원본 픽셀'에 해당하는지 파악.
+            const pointX_inImage = (pinchCenterX_abs - rect.left - translateX);
+            const pointY_inImage = (pinchCenterY_abs - rect.top - translateY);
+
+            // 이미지의 원본 픽셀 좌표를 현재 스케일로 나눈 값 (원본 스케일 1 기준의 좌표)
+            pinchZoomPointX = pointX_inImage / oldScale;
+            pinchZoomPointY = pointY_inImage / oldScale;
         }
-        enlargedImage.style.transition = 'none'; // 터치 중 transition 비활성화
+        enlargedImage.style.transition = 'none';
     }, { passive: false });
 
     enlargedImage.addEventListener('touchmove', (event) => {
-        event.preventDefault(); // 기본 브라우저 동작(스크롤, 줌 등) 방지
+        event.preventDefault();
 
         if (isDragging && event.touches.length === 1) {
-            // 한 손가락 드래그
             translateX = event.touches[0].clientX - touchStartX;
             translateY = event.touches[0].clientY - touchStartY;
+            limitPan();
             applyTransform();
         } else if (event.touches.length === 2 && initialPinchDistance > 0) {
-            // 두 손가락 핀치 줌
             const currentPinchDistance = getPinchDistance(event.touches);
-            const zoomFactor = currentPinchDistance / initialPinchDistance;
+            let newScale = initialZoomScale * (currentPinchDistance / initialPinchDistance);
+            newScale = Math.max(0.5, Math.min(newScale, 5));
 
-            scale = initialZoomScale * zoomFactor;
-            scale = Math.max(0.5, Math.min(scale, 5)); // 최소 0.5배, 최대 5배 제한
+            if (newScale !== scale) {
+                const rect = enlargedImage.getBoundingClientRect();
 
-            const rect = enlargedImage.getBoundingClientRect();
-            // [수정] 문제 1 해결: 핀치 중심점을 이미지의 *현재 중심*을 기준으로 계산
-            const pinchCenterXRelativeToCenter = ((event.touches[0].clientX + event.touches[1].clientX) / 2) - (rect.left + rect.width / 2);
-            const pinchCenterYRelativeToCenter = ((event.touches[0].clientY + event.touches[1].clientY) / 2) - (rect.top + rect.height / 2);
+                // 새로운 스케일에 따라 이미지의 핀치 중심점이 이동해야 하는 거리 계산
+                // 이미지의 원본 좌표계에서의 핀치 중심점(pinchZoomPointX/Y)을 새로운 스케일로 곱하고,
+                // 이를 기존 스케일에서의 위치와 비교하여 translate를 보정.
+                const dx = (pinchZoomPointX * newScale) - (pinchZoomPointX * scale);
+                const dy = (pinchZoomPointY * newScale) - (pinchZoomPointY * scale);
 
-            // 스케일 변경으로 인해 핀치 중심점(중심 기준)이 얼마나 이동하는지 계산
-            const newPinchCenterXRelativeToCenter = pinchCenterXRelativeToCenter * (scale / initialZoomScale);
-            const newPinchCenterYRelativeToCenter = pinchCenterYRelativeToCenter * (scale / initialZoomScale);
+                translateX -= dx;
+                translateY -= dy;
 
-            // 이 이동량의 차이를 이미지 이동(translate)으로 보정
-            translateX -= (newPinchCenterXRelativeToCenter - pinchCenterXRelativeToCenter);
-            translateY -= (newPinchCenterYRelativeToCenter - pinchCenterYRelativeToCenter);
-
-            applyTransform();
+                scale = newScale;
+                limitPan();
+                applyTransform();
+            }
         }
     }, { passive: false });
 
     enlargedImage.addEventListener('touchend', () => {
         isDragging = false;
         initialPinchDistance = 0;
-        initialZoomScale = scale; // 마지막 스케일을 유지하여 연속적인 핀치-줌 가능
-        enlargedImage.style.transition = 'transform 0.1s ease-out'; // 터치 끝난 후 transition 활성화
+        initialZoomScale = scale;
+        enlargedImage.style.transition = 'transform 0.1s ease-out';
     });
 
     function getPinchDistance(touches) {
