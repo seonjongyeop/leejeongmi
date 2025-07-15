@@ -46,10 +46,10 @@ document.addEventListener('DOMContentLoaded', () => {
             artworkImage.src = artwork.thumbnail;
             artworkImage.alt = artwork.title;
             // 작품 정보를 원하는 형식으로 조합하여 할당
-            artworkDetailNumber.textContent = `${artwork.id}.`; // 번호는 그대로 둠
-            artworkDetailTitle.textContent = `${artwork.artist}, ‹${artwork.title}›(${artwork.year})`; // 작가, ‹제목›(연도)
-            artworkDetailArtist.textContent = `${artwork.material}, ${artwork.size}`; // 재료, 크기
-            artworkDetailInfo.textContent = ''; // 이 요소는 이제 사용하지 않으므로 비움
+            artworkDetailNumber.textContent = `${artwork.id}.`;
+            artworkDetailTitle.textContent = `${artwork.artist}, ‹${artwork.title}›(${artwork.year})`;
+            artworkDetailArtist.textContent = `${artwork.material}, ${artwork.size}`;
+            artworkDetailInfo.textContent = '';
             artworkDetailDescription.textContent = artwork.description;
             enlargeButton.style.display = 'block';
 
@@ -104,9 +104,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (artwork) {
             renderArtwork(artwork);
             renderPagination();
-            const newUrl = `/artwork/${id}`;
-            if (window.location.pathname !== newUrl) {
-                history.pushState({ page: id }, '', newUrl);
+            // [수정] URL 변경 로직: GitHub Pages 호환을 위해 해시 기반 URL 사용
+            const newPath = `/artwork/${id}`; // 해시 뒤에 붙일 경로 (예: #/artwork/7)
+            const hashUrl = `#${newPath}`;
+
+            // 현재 URL의 해시가 이미 원하는 경로와 같다면 변경하지 않음
+            if (window.location.hash !== hashUrl) {
+                // replaceState를 사용하여 브라우저 히스토리 스택에 새 항목을 추가하지 않고 현재 항목을 대체
+                history.replaceState({ page: id }, '', hashUrl);
             }
             if (scrollableContainer) {
                 scrollableContainer.scrollTo({ top: 0, behavior: 'smooth' });
@@ -114,7 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             console.error(`데이터에서 ID ${id}의 작품을 찾을 수 없습니다.`);
             renderArtwork(null);
-            history.pushState({ page: id }, '', `/artwork/not-found`);
+            // 작품을 찾을 수 없는 경우에도 해시 경로를 업데이트
+            history.replaceState({ page: id }, '', `#/artwork/not-found`);
         }
     }
 
@@ -128,12 +134,15 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             artworks = data;
 
-            const pathSegments = window.location.pathname.split('/');
-            const lastSegment = pathSegments[pathSegments.length - 1];
+            // [수정] 초기 URL 파싱 로직: window.location.pathname 대신 window.location.hash 사용
+            // 예: URL이 'leejeongmi.kr/#/artwork/7'일 경우 hashSegments는 ["#", "artwork", "7"]
+            const hashSegments = window.location.hash.split('/');
+            const lastHashSegment = hashSegments[hashSegments.length - 1]; // "7"
+
             let initialId = 1;
 
-            if (pathSegments.includes('artwork') && !isNaN(parseInt(lastSegment))) {
-                const parsedId = parseInt(lastSegment);
+            if (hashSegments.includes('artwork') && !isNaN(parseInt(lastHashSegment))) {
+                const parsedId = parseInt(lastHashSegment);
                 if (parsedId >= 1 && parsedId <= artworks.length) {
                     initialId = parsedId;
                 }
@@ -142,18 +151,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             navigateToArtwork(currentArtworkId);
 
+            // [수정] popstate 이벤트 핸들러: history.replaceState로 해시를 사용하므로
+            // 초기 로드 시의 파싱과 동일하게 hash를 기반으로 동작하도록 함.
             window.addEventListener('popstate', (event) => {
-                if (event.state && event.state.page) {
-                    currentArtworkId = event.state.page;
-                    const artwork = artworks.find(a => a.id === currentArtworkId);
-                    if (artwork) {
-                        renderArtwork(artwork);
-                        renderPagination();
-                    } else {
-                        renderArtwork(null);
+                const popStateHashSegments = window.location.hash.split('/');
+                const popStateLastSegment = popStateHashSegments[popStateHashSegments.length - 1];
+                let popStateId = 1;
+
+                if (popStateHashSegments.includes('artwork') && !isNaN(parseInt(popStateLastSegment))) {
+                    const parsedId = parseInt(popStateLastSegment);
+                    if (parsedId >= 1 && parsedId <= artworks.length) {
+                        popStateId = parsedId;
                     }
+                }
+                currentArtworkId = popStateId; // 현재 작품 ID 업데이트
+
+                const artwork = artworks.find(a => a.id === currentArtworkId);
+                if (artwork) {
+                    renderArtwork(artwork);
+                    renderPagination();
                 } else {
-                    navigateToArtwork(1);
+                    renderArtwork(null);
                 }
             });
         })
@@ -222,10 +240,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let translateX = 0;
     let translateY = 0;
     let isDragging = false;
-    let startX, startY;
+    let startX, startY; // 마우스 클릭 시작점 또는 터치 드래그 시작점 (translate 값을 기준으로 함)
 
     function applyTransform() {
-        enlargedImage.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+        // transform-origin: 50% 50%이므로, translate는 이미지의 중심을 이동시킴
+        enlargedImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
         enlargedImage.style.cursor = scale > 1 ? 'grab' : 'default';
     }
 
@@ -241,36 +260,46 @@ document.addEventListener('DOMContentLoaded', () => {
         const scaleAmount = 0.1;
         const oldScale = scale;
 
-        if (event.deltaY < 0) {
+        if (event.deltaY < 0) { // 휠 업: 확대
             scale += scaleAmount;
-        } else {
+        } else { // 휠 다운: 축소
             scale -= scaleAmount;
         }
 
-        scale = Math.max(0.5, Math.min(scale, 5));
+        scale = Math.max(0.5, Math.min(scale, 5)); // 최소 0.5배, 최대 5배 제한
 
         const rect = enlargedImage.getBoundingClientRect();
-        const mouseX = event.clientX - rect.left;
-        const mouseY = event.clientY - rect.top;
 
-        translateX = mouseX - (mouseX - translateX) * (scale / oldScale);
-        translateY = mouseY - (mouseY - translateY) * (scale / oldScale);
+        // [수정] 문제 1 해결: 커서 위치를 이미지의 *현재 중심*을 기준으로 계산하여 확대/축소 기준점 보정
+        const mouseXRelativeToCenter = event.clientX - (rect.left + rect.width / 2);
+        const mouseYRelativeToCenter = event.clientY - (rect.top + rect.height / 2);
+
+        // 스케일 변경으로 인해 마우스 위치(중심 기준)가 얼마나 이동하는지 계산
+        const newMouseXRelativeToCenter = mouseXRelativeToCenter * (scale / oldScale);
+        const newMouseYRelativeToCenter = mouseYRelativeToCenter * (scale / oldScale);
+
+        // 이 이동량의 차이를 이미지 이동(translate)으로 보정
+        translateX -= (newMouseXRelativeToCenter - mouseXRelativeToCenter);
+        translateY -= (newMouseYRelativeToCenter - mouseYRelativeToCenter);
 
         applyTransform();
     });
 
     enlargedImage.addEventListener('mousedown', (event) => {
-        if (scale > 1) {
+        if (scale > 1) { // 확대된 상태에서만 드래그 가능
             isDragging = true;
+            // 현재 translate 값에서 마우스 클릭 위치를 빼서 드래그 시작점 설정
             startX = event.clientX - translateX;
             startY = event.clientY - translateY;
             enlargedImage.style.cursor = 'grabbing';
+            enlargedImage.style.transition = 'none'; // 드래그 중 transition 비활성화
         }
     });
 
     enlargedImage.addEventListener('mousemove', (event) => {
         if (!isDragging) return;
         event.preventDefault();
+        // 현재 마우스 위치에서 시작점을 빼서 새로운 translate 값 계산
         translateX = event.clientX - startX;
         translateY = event.clientY - startY;
         applyTransform();
@@ -279,17 +308,19 @@ document.addEventListener('DOMContentLoaded', () => {
     enlargedImage.addEventListener('mouseup', () => {
         isDragging = false;
         enlargedImage.style.cursor = scale > 1 ? 'grab' : 'default';
+        enlargedImage.style.transition = 'transform 0.1s ease-out'; // 드래그 끝난 후 transition 활성화
     });
 
     enlargedImage.addEventListener('mouseleave', () => {
         isDragging = false;
         enlargedImage.style.cursor = scale > 1 ? 'grab' : 'default';
+        enlargedImage.style.transition = 'transform 0.1s ease-out'; // 드래그 끝난 후 transition 활성화
     });
 
-    let touchStartX = 0, touchStartY = 0;
-    let initialPinchDistance = 0;
-    let initialZoomScale = 1;
-    let lastTapTime = 0;
+    let touchStartX = 0, touchStartY = 0; // 터치 드래그 시작점
+    let initialPinchDistance = 0; // 핀치 줌 시작 시 두 손가락 거리
+    let initialZoomScale = 1; // 핀치 줌 시작 시 스케일
+    let lastTapTime = 0; // 더블 탭 감지용
 
     enlargedImage.addEventListener('touchstart', (event) => {
         if (event.touches.length === 1) {
@@ -299,47 +330,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTapTime;
-            if (tapLength < 300 && tapLength > 0) {
-                event.preventDefault();
-                resetZoomPan();
+            if (tapLength < 300 && tapLength > 0) { // 더블 탭 감지 (300ms 이내)
+                event.preventDefault(); // 기본 더블 탭 줌 방지
+                resetZoomPan(); // 더블 탭 시 초기화
             }
             lastTapTime = currentTime;
 
         } else if (event.touches.length === 2) {
-            isDragging = false;
+            isDragging = false; // 두 손가락 핀치 시 드래그 비활성화
             initialPinchDistance = getPinchDistance(event.touches);
             initialZoomScale = scale;
 
+            // 핀치 시작 시 두 손가락의 중심점 (이미지 요소의 좌측 상단 기준)
             const midX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
             const midY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
 
             const rect = enlargedImage.getBoundingClientRect();
-            startX = midX - translateX - rect.left;
-            startY = midY - translateY - rect.top;
+            // 핀치 시작 시 이미지 중심을 기준으로 한 두 손가락의 중심점 위치 저장
+            startX = midX - (rect.left + rect.width / 2); // startX는 이제 이미지 중심 기준
+            startY = midY - (rect.top + rect.height / 2); // startY는 이제 이미지 중심 기준
         }
-        enlargedImage.style.transition = 'none';
+        enlargedImage.style.transition = 'none'; // 터치 중 transition 비활성화
     }, { passive: false });
 
     enlargedImage.addEventListener('touchmove', (event) => {
-        event.preventDefault();
+        event.preventDefault(); // 기본 브라우저 동작(스크롤, 줌 등) 방지
 
         if (isDragging && event.touches.length === 1) {
+            // 한 손가락 드래그
             translateX = event.touches[0].clientX - touchStartX;
             translateY = event.touches[0].clientY - touchStartY;
             applyTransform();
         } else if (event.touches.length === 2 && initialPinchDistance > 0) {
+            // 두 손가락 핀치 줌
             const currentPinchDistance = getPinchDistance(event.touches);
             const zoomFactor = currentPinchDistance / initialPinchDistance;
 
             scale = initialZoomScale * zoomFactor;
-            scale = Math.max(0.5, Math.min(scale, 5));
-
-            const midX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
-            const midY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+            scale = Math.max(0.5, Math.min(scale, 5)); // 최소 0.5배, 최대 5배 제한
 
             const rect = enlargedImage.getBoundingClientRect();
-            translateX = midX - (midX - rect.left - translateX) * (scale / initialZoomScale);
-            translateY = midY - (midY - rect.top - translateY) * (scale / initialZoomScale);
+            // [수정] 문제 1 해결: 핀치 중심점을 이미지의 *현재 중심*을 기준으로 계산
+            const pinchCenterXRelativeToCenter = ((event.touches[0].clientX + event.touches[1].clientX) / 2) - (rect.left + rect.width / 2);
+            const pinchCenterYRelativeToCenter = ((event.touches[0].clientY + event.touches[1].clientY) / 2) - (rect.top + rect.height / 2);
+
+            // 스케일 변경으로 인해 핀치 중심점(중심 기준)이 얼마나 이동하는지 계산
+            const newPinchCenterXRelativeToCenter = pinchCenterXRelativeToCenter * (scale / initialZoomScale);
+            const newPinchCenterYRelativeToCenter = pinchCenterYRelativeToCenter * (scale / initialZoomScale);
+
+            // 이 이동량의 차이를 이미지 이동(translate)으로 보정
+            translateX -= (newPinchCenterXRelativeToCenter - pinchCenterXRelativeToCenter);
+            translateY -= (newPinchCenterYRelativeToCenter - pinchCenterYRelativeToCenter);
 
             applyTransform();
         }
@@ -348,8 +389,8 @@ document.addEventListener('DOMContentLoaded', () => {
     enlargedImage.addEventListener('touchend', () => {
         isDragging = false;
         initialPinchDistance = 0;
-        initialZoomScale = 1;
-        enlargedImage.style.transition = 'transform 0.1s ease-out';
+        initialZoomScale = scale; // 마지막 스케일을 유지하여 연속적인 핀치-줌 가능
+        enlargedImage.style.transition = 'transform 0.1s ease-out'; // 터치 끝난 후 transition 활성화
     });
 
     function getPinchDistance(touches) {
