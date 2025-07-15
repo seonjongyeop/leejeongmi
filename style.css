@@ -355,13 +355,12 @@ p.artwork-artist {
     background: none;
     border: none;
     font-size: 24px;
-    color: var(--text-color-primary);
+    color: var(--text-color-primary); /* 항상 기본 텍스트 색상 유지 */
     cursor: pointer;
     padding: 0 10px;
     flex-shrink: 0;
-    /* font-weight를 400으로 변경하여 굵기 감소 */
     font-weight: 400; /* 또는 300으로 더 얇게 */
-    transition: color 0.2s ease, opacity 0.3s ease;
+    transition: color 0.2s ease, opacity 0.3s ease; /* transition 유지 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -372,11 +371,18 @@ p.artwork-artist {
     color: #888;
 }
 
+/* [수정됨] disabled 상태의 버튼 스타일: 색상, 투명도 변화 없음, 클릭만 방지 */
 .pagination-nav-button:disabled {
-    color: #ccc;
     cursor: default;
-    opacity: 0; /* 비활성화 시 투명하게 */
-    pointer-events: none; /* 클릭 이벤트 방지 */
+    pointer-events: none; /* 클릭 이벤트만 방지 */
+    /* color나 opacity는 hidden 클래스로 제어하거나 변경하지 않음 */
+    /* 여기에 다른 시각적 변화를 주지 않음 */
+}
+
+/* 특정 버튼 (이전/다음 버튼 모두)을 숨길 때 사용할 클래스 */
+.pagination-nav-button.hidden {
+    opacity: 0;
+    pointer-events: none; /* 숨겨진 상태에서도 클릭 불가 */
 }
 
 .page-number {
