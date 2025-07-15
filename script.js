@@ -73,8 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function renderPagination() {
-        // 쪽번호만 제거
-        paginationContainer.innerHTML = '';
+        paginationContainer.innerHTML = ''; // 쪽번호만 제거
 
         artworks.forEach(artwork => {
             const pageNumberDiv = document.createElement('div');
@@ -102,14 +101,13 @@ document.addEventListener('DOMContentLoaded', () => {
             paginationContainer.appendChild(pageNumberDiv);
         });
 
-        // 이전/다음 버튼 활성화/비활성화 상태 및 가시성 업데이트
+        // 이전/다음 버튼 가시성 및 활성화/비활성화 상태 업데이트
         updateNavigationButtons();
 
         // 현재 활성화된 쪽번호가 중앙에 오도록 스크롤
         const activePageNumber = paginationContainer.querySelector('.page-number.active');
         if (activePageNumber) {
             const containerWidth = paginationContainer.clientWidth;
-            // 스크롤될 위치: 활성 요소의 왼쪽 끝 - (컨테이너 너비 / 2) + (활성 요소 너비 / 2)
             const scrollLeft = activePageNumber.offsetLeft - (containerWidth / 2) + (activePageNumber.clientWidth / 2);
 
             paginationContainer.scrollTo({
@@ -119,21 +117,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // [수정됨] updateNavigationButtons 함수
     function updateNavigationButtons() {
+        // 이전 버튼 (<): 1페이지일 때 숨김 처리
         if (currentArtworkId === 1) {
-            prevArtworkButton.disabled = true;
-            // prevArtworkButton.style.opacity = 0; // 필요시 완전 숨김
+            prevArtworkButton.classList.add('hidden');
         } else {
-            prevArtworkButton.disabled = false;
-            // prevArtworkButton.style.opacity = 1;
+            prevArtworkButton.classList.remove('hidden');
         }
 
+        // 다음 버튼 (>):
+        // 마지막 페이지일 때 숨김 처리 (opacity: 0) 및 클릭 불가
         if (currentArtworkId === artworks.length) {
-            nextArtworkButton.disabled = true;
-            // nextArtworkButton.style.opacity = 0; // 필요시 완전 숨김
+            nextArtworkButton.classList.add('hidden');
+            nextArtworkButton.disabled = true; // 클릭 비활성화 (hidden이 pointer-events:none을 포함하지만 명시적으로)
         } else {
-            nextArtworkButton.disabled = false;
-            // nextArtworkButton.style.opacity = 1;
+            // 그 외의 경우 (마지막 페이지가 아닐 때): 항상 보이게 (opacity: 1) 및 클릭 가능
+            nextArtworkButton.classList.remove('hidden');
+            nextArtworkButton.disabled = false; // 클릭 활성화
         }
     }
 
@@ -200,9 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         popStateId = parsedId;
                     }
                 }
-                // popstate 이벤트는 navigateToArtwork를 바로 호출하지 않고,
-                // currentArtworkId만 변경한 후 renderArtwork와 renderPagination을 다시 호출하는 것이 일반적입니다.
-                // 그러나 navigateToArtwork가 이미 이 로직을 포함하므로 직접 호출해도 무방합니다.
                 navigateToArtwork(popStateId);
             });
         })
@@ -449,8 +447,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const pointX_inImage = (pinchCenterX_abs - rect.left - translateX);
             const pointY_inImage = (pinchCenterY_abs - rect.top - translateY);
 
-            pinchZoomPointX = pointX_inImage / scale; // Use current scale here
-            pinchZoomPointY = pointY_inImage / scale; // Use current scale here
+            pinchZoomPointX = pointX_inImage / scale;
+            pinchZoomPointY = pointY_inImage / scale;
         }
         enlargedImage.style.transition = 'none';
     }, { passive: false });
