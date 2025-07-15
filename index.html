@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이정미 작가 | 온라인 전통자수 전시관</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Font Awesome 아이콘 라이브러리 추가 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="gallery-main-container">
+        <header class="main-header">
+            <div class="header-segment artist-segment">
+                <a href="#" id="artist-name-link">이정미 작가</a>
+            </div>
+            <div class="header-segment website-segment">
+                <a href="http://www.leejeongmi.kr" target="_blank" id="website-link">www.leejeongmi.kr</a>
+            </div>
+        </header>
+
+        <div class="content-scroll-area">
+            <div class="artwork-display">
+                <div class="image-container">
+                    <img id="artwork-image" src="" alt="작품 이미지">
+                    <!-- [수정] 버튼 텍스트와 아이콘 추가 -->
+                    <button id="enlarge-button">
+                        <i class="fas fa-search-plus"></i> 확대해서 보기
+                    </button>
+                    <div id="image-load-error" class="error-message" style="display:none;">이미지를 불러오는 데 실패했습니다.</div>
+                </div>
+            </div>
+
+            <div class="artwork-info-section">
+                <div class="artwork-details">
+                    <div class="artwork-meta-info">
+                        <p class="artwork-detail-text artwork-number" id="artwork-detail-number"></p>
+                        <h2 class="artwork-detail-text artwork-title" id="artwork-detail-title"></h2>
+                        <p class="artwork-detail-text artwork-artist" id="artwork-detail-artist"></p>
+                        <p class="artwork-detail-text artwork-info" id="artwork-detail-info"></p>
+                    </div>
+                    <p class="artwork-detail-text artwork-description" id="artwork-detail-description"></p>
+                </div>
+            </div>
+        </div>
+        <div class="pagination-area">
+            <div class="pagination" id="pagination-container">
+            </div>
+        </div>
+    </div>
+    <div id="enlarge-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" tabindex="0" role="button" aria-label="닫기">&times;</span>
+            <img id="enlarged-image" src="" alt="확대된 작품 이미지">
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

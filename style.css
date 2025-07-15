@@ -1,0 +1,618 @@
+/* style.css */
+/* 폰트 정의는 이전과 동일 */
+@font-face {
+    font-family: 'MaruBuri';
+    src: url('assets/fonts/MaruBuri-Light.woff2') format('woff2'),
+         url('assets/fonts/MaruBuri-Light.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'MaruBuri';
+    src: url('assets/fonts/MaruBuri-Regular.woff2') format('woff2'),
+         url('assets/fonts/MaruBuri-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'MaruBuri';
+    src: url('assets/fonts/MaruBuri-Bold.woff2') format('woff2'),
+         url('assets/fonts/MaruBuri-Bold.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+}
+
+:root {
+    --gallery-width-pc: 1170px; /* 전체 갤러리 컨테이너의 PC 너비 */
+    --main-outside-bg-color: #F5F4F1; /* 가장 바깥쪽 배경색 */
+    --inner-content-bg-color: #FFFFFF; /* 1170px 컨테이너 및 내부 콘텐츠 배경색 */
+    --artist-box-bg-color: #E4E59A; /* "이정미 작가" 박스 배경색 */
+    --border-line-color: #BBBBBB; /* 헤더의 구분선 색상 */
+
+    --text-color-primary: #000000;
+    --text-color-secondary: #666666;
+    --text-color-number: #555555;
+
+    /* 쪽번호 크기 (이전 수정분 유지) */
+    --pagination-selected-font-size-pc: 32px;
+    --pagination-default-font-size-pc: 24px;
+    --pagination-active-color: var(--text-color-primary);
+
+    --artwork-title-font-size-pc: 28px;
+    /* [수정] 작품 작가/정보 글꼴 크기 조정 */
+    --artwork-artist-info-font-size-pc: 14px; /* 16px에서 14px로 줄임 */
+    --artwork-description-font-size-pc: 16px;
+
+    --font-maruburi: 'MaruBuri', sans-serif;
+
+    /* 헤더와 쪽번호 영역의 고정 높이 */
+    --header-height-pc: 60px;
+    --pagination-area-height-pc: 80px;
+
+    /* 전반적인 패딩 및 여백 조정 */
+    --content-padding-pc: 40px; /* PC 기본 패딩 */
+    --content-padding-mobile: 20px; /* 모바일 기본 패딩 */
+
+    /* [추가] 작품 설명 하단 여백 */
+    --artwork-description-bottom-margin-pc: 50px; /* PC */
+    --artwork-description-bottom-margin-mobile: 30px; /* 모바일 */
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: var(--font-maruburi);
+    color: var(--text-color-primary);
+    background-color: var(--main-outside-bg-color);
+    line-height: 1.6;
+    overflow: hidden; /* 전체 브라우저 스크롤 방지 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 모든 주요 콘텐츠를 감싸는 중앙 컨테이너 (흰색 배경) */
+.gallery-main-container {
+    width: 100%;
+    max-width: var(--gallery-width-pc);
+    height: 100vh; /* 뷰포트 높이 전체를 차지 */
+    background-color: var(--inner-content-bg-color);
+    box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column; /* 자식 요소들을 세로로 정렬 */
+    position: relative; /* 자식 sticky/absolute 기준 */
+    overflow-y: hidden; /* 이 컨테이너 자체는 스크롤되지 않음 */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+/* For Chrome, Safari and Opera */
+.gallery-main-container::-webkit-scrollbar {
+    display: none;
+}
+
+
+/* 헤더 스타일 (gallery-main-container의 자식) */
+.main-header {
+    background-color: var(--main-outside-bg-color);
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    height: var(--header-height-pc);
+    border-bottom: 1px solid var(--border-line-color);
+    flex-shrink: 0;
+    position: sticky; /* 헤더를 스크롤 최상단에 고정 */
+    top: 0;
+    z-index: 1000;
+}
+
+.header-segment {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.artist-segment {
+    background-color: var(--artist-box-bg-color);
+    padding: 0 25px;
+    border-right: 1px solid var(--border-line-color);
+    flex-shrink: 0;
+}
+
+.website-segment {
+    background-color: var(--main-outside-bg-color);
+    flex-grow: 1;
+    padding: 0 25px;
+}
+
+.main-header a {
+    text-decoration: none;
+    color: var(--text-color-primary);
+    font-size: 20px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.main-header a:hover {
+    opacity: 0.8;
+}
+
+/* 콘텐츠 스크롤 영역 (헤더와 쪽번호를 제외한 나머지 공간) */
+.content-scroll-area {
+    flex-grow: 1; /* 남은 공간을 모두 차지 */
+    background-color: var(--inner-content-bg-color);
+    /* padding-bottom: var(--pagination-area-height-pc); /* 이 줄은 삭제 */ */
+    overflow-y: auto; /* 이 컨테이너 내부에서 스크롤 발생 */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+    /* [수정] Flexbox 활성화 및 자식 요소 세로 정렬 */
+    display: flex;
+    flex-direction: column;
+}
+.content-scroll-area::-webkit-scrollbar {
+    display: none;
+}
+
+
+/* 작품 표시 섹션 */
+.artwork-display {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: var(--content-padding-pc) var(--content-padding-pc) 20px; /* 상하좌우 패딩 조정 */
+    transition: opacity 0.3s ease-in-out;
+
+    /* [추가] 남은 공간을 차지하여 artwork-info-section을 아래로 밀어냄 */
+    flex-grow: 1;
+}
+
+.image-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 이미지와 버튼을 수직 중앙 정렬 */
+    align-items: center;
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 25px; /* 이미지와 버튼 사이 간격 유지 */
+    /* 이미지 컨테이너의 최소 높이를 설정하여, 작은 이미지일 때도 레이아웃이 급변하지 않도록 */
+    min-height: 200px; /* 적절한 최소 높이, 조정 가능 */
+}
+
+.image-container img {
+    max-width: 100%;
+    max-height: 55vh; /* 이미지 최대 높이 제한 (뷰포트 높이의 50%) */
+    height: auto;
+    display: block;
+    object-fit: contain;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    background-color: #f8f8f8;
+}
+
+#image-load-error {
+    color: red;
+    font-size: 16px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+#enlarge-button {
+    background-color: #EDEDED;
+    border: 1px solid #CCCCCC;
+    /* [수정] 내부 여백 조정 */
+    padding: 12px 25px; /* 상하좌우 패딩 증가 */
+    cursor: pointer;
+    font-family: var(--font-maruburi);
+    font-size: 16px;
+    font-weight: 400;
+    transition: background-color 0.3s ease;
+    min-width: 150px;
+    /* [추가] 아이콘과 텍스트 사이 간격 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* 아이콘과 텍스트 사이 간격 */
+}
+
+#enlarge-button:hover {
+    background-color: #DDDDDD;
+}
+
+/* 작품 정보 섹션 (설명) */
+.artwork-info-section {
+    padding: 0 var(--content-padding-pc); /* 좌우 패딩 유지 */
+    padding-bottom: var(--artwork-description-bottom-margin-pc); /* 작품 설명 하단 여백 추가 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    background-color: var(--inner-content-bg-color); /* sticky 시 배경이 투명해지지 않도록 */
+    border-top: 1px solid var(--border-line-color);
+    /* 기존 padding-bottom: 0; 라인은 삭제되었습니다. */
+
+    /* [수정] content-scroll-area 하단에 고정 */
+    position: sticky;
+    bottom: var(--pagination-area-height-pc); /* 쪽번호 영역 높이만큼 위로 고정 */
+    z-index: 999; /* 다른 콘텐츠 위에 표시 */
+    flex-shrink: 0; /* 내용이 많아도 줄어들지 않도록 */
+}
+
+.artwork-details {
+    width: 100%;
+    max-width: 800px; /* 작품 정보 최대 너비 조정 */
+    text-align: center;
+    padding-top: 0; /* 불필요한 상단 패딩 제거 */
+    margin-bottom: 0; /* 불필요한 하단 마진 제거 */
+    max-height: none; /* 자체 스크롤 제거 */
+    overflow-y: visible;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.artwork-details::-webkit-scrollbar {
+    display: none;
+}
+
+/* 작품 정보 텍스트 그룹화를 위한 새로운 스타일 */
+.artwork-meta-info { /* 새로 추가할 클래스 */
+    margin-bottom: 20px; /* 메타 정보 그룹 아래 여백 */
+}
+
+.artwork-detail-text {
+    margin: 0;
+    padding: 0; /* 기본 패딩 제거 */
+    display: inline; /* 텍스트를 한 줄로 표시 */
+}
+
+.artwork-number {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-color-number);
+    margin-right: 5px; /* 번호 뒤에 간격 추가 */
+}
+
+.artwork-title {
+    font-size: var(--artwork-title-font-size-pc);
+    font-weight: 700;
+    margin-right: 5px; /* 제목 뒤에 간격 추가 */
+}
+
+/* [수정] artwork-artist를 블록 요소로 변경하여 줄 바꿈 적용 및 specificity 강화 */
+/* p 태그에 artwork-artist 클래스가 적용되었을 때만 블록으로 만듭니다. */
+p.artwork-artist { /* 기존 .artwork-artist 선택자를 p.artwork-artist로 변경 */
+    font-size: var(--artwork-artist-info-font-size-pc); /* 변경된 변수 사용 */
+    font-weight: 400;
+    color: var(--text-color-secondary);
+    display: block; /* 줄 바꿈을 위해 블록 요소로 변경 */
+    margin-top: 5px; /* 제목과의 간격 추가 */
+}
+
+.artwork-info {
+    font-size: var(--artwork-artist-info-font-size-pc); /* 변경된 변수 사용 */
+    font-weight: 400;
+    color: var(--text-color-secondary);
+}
+
+.artwork-description {
+    font-size: var(--artwork-description-font-size-pc);
+    font-weight: 300;
+    text-align: justify;
+    white-space: pre-wrap;
+    padding: 0 10px; /* 좌우 패딩 유지 */
+    line-height: 1.8;
+    margin-top: 20px; /* 설명 위에 간격 추가 */
+    display: block; /* 설명은 블록 요소로 유지하여 줄 바꿈 */
+}
+
+/* 쪽번호 영역 - 하단 고정 */
+.pagination-area {
+    position: sticky; /* sticky로 변경 */
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: var(--pagination-area-height-pc);
+    background-color: var(--inner-content-bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    border-top: 1px solid var(--border-line-color); /* Added border-top */
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.pagination {
+    display: flex;
+    white-space: nowrap;
+    justify-content: flex-start;
+    gap: 15px;
+    padding: 10px;
+    width: 100%;
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    /* [수정] 쪽번호 항목들을 수직 중앙 정렬 */
+    align-items: baseline; /* 폰트 크기가 달라도 텍스트 베이스라인을 맞춥니다. */
+    /* 또는 align-items: center; // 중앙 정렬이 더 자연스러울 수 있습니다. */
+}
+.pagination::-webkit-scrollbar {
+    display: none;
+}
+
+.page-number {
+    font-family: var(--font-maruburi);
+    font-size: var(--pagination-default-font-size-pc);
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    color: var(--text-color-primary);
+    line-height: 1; /* [수정] line-height를 1로 고정하여 폰트 크기 변화에 따른 높이 변화를 최소화 */
+    padding: 0 5px;
+    min-width: 40px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.page-number.active {
+    font-size: var(--pagination-selected-font-size-pc);
+    font-weight: 700;
+    color: var(--pagination-active-color);
+    /* [추가] 활성화된 요소의 line-height도 고정 */
+    line-height: 1;
+}
+
+.page-number:hover:not(.active) {
+    color: #888;
+}
+
+/* 확대 모달 - 이전과 동일 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.9);
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.modal-content {
+    position: relative;
+    width: 90%;
+    height: 90%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#enlarged-image {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    cursor: grab;
+    transform-origin: 50% 50%;
+    transition: transform 0.1s ease-out;
+    touch-action: none;
+}
+
+.close-button {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 2001;
+    background: none;
+    border: none;
+    padding: 5px 10px;
+    line-height: 1;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: #bbb;
+}
+
+
+/* 반응형 디자인 */
+/* PC 환경 (기본값) */
+@media (min-width: 769px) {
+    .main-header {
+        height: var(--header-height-pc);
+    }
+    .pagination-area {
+        height: var(--pagination-area-height-pc);
+    }
+    /* .content-scroll-area {
+        padding-bottom: var(--pagination-area-height-pc);
+    } */ /* 이 줄은 삭제 */
+    .pagination {
+        max-width: var(--gallery-width-pc);
+    }
+}
+
+/* 태블릿 및 작은 PC 화면 */
+@media (max-width: 1200px) {
+    :root {
+        --header-height-pc: 55px;
+        --pagination-area-height-pc: 70px;
+        --content-padding-pc: 30px; /* 패딩 줄이기 */
+    }
+    .main-header a {
+        font-size: 18px;
+    }
+    .artist-segment, .website-segment {
+        padding: 0 15px;
+    }
+    .artwork-display {
+        padding: var(--content-padding-pc) var(--content-padding-pc) 15px;
+    }
+    .artwork-info-section {
+        padding: 0 var(--content-padding-pc); /* 좌우 패딩 유지 */
+        padding-bottom: calc(var(--artwork-description-bottom-margin-pc) * 0.8); /* PC 여백의 80% */
+        bottom: var(--pagination-area-height-pc); /* 쪽번호 영역 높이만큼 위로 고정 */
+    }
+    .artwork-title {
+        font-size: calc(var(--artwork-title-font-size-pc) * 0.9);
+    }
+    .artwork-artist,
+    .artwork-info { /* [수정] artwork-description은 별도로 관리 */
+        font-size: calc(var(--artwork-artist-info-font-size-pc) * 0.9); /* 변경된 변수 사용 */
+    }
+    .artwork-description { /* [추가] artwork-description의 글꼴 크기 재정의 */
+        font-size: calc(var(--artwork-description-font-size-pc) * 0.9);
+    }
+    .page-number {
+        font-size: calc(var(--pagination-default-font-size-pc) * 0.9);
+        gap: 10px;
+    }
+    .page-number.active {
+        font-size: calc(var(--pagination-selected-font-size-pc) * 0.9);
+    }
+    .close-button {
+        font-size: 36px;
+    }
+    .image-container img {
+        max-height: 45vh; /* 태블릿에서 이미지 최대 높이 조정 */
+    }
+}
+
+/* 모바일 환경 */
+@media (max-width: 768px) {
+    :root {
+        --header-height-pc: 50px;
+        --pagination-area-pc: 60px;
+        --content-padding-mobile: 15px;
+    }
+    .main-header {
+        height: var(--header-height-pc);
+        padding: 0;
+    }
+    .header-segment {
+        border-right: 1px solid var(--border-line-color);
+    }
+    .main-header a {
+        font-size: 16px;
+        padding: 0 15px;
+    }
+    .artwork-display {
+        padding: var(--content-padding-mobile) var(--content-padding-mobile) 10px;
+    }
+    .image-container {
+        margin-bottom: 10px;
+    }
+    #enlarge-button {
+        /* [수정] 모바일 버튼 여백 조정 */
+        padding: 8px 15px; /* 패딩 조정 */
+        font-size: 13px;
+        gap: 6px; /* 아이콘과 텍스트 사이 간격 */
+    }
+    .artwork-details {
+        padding-top: 20px;
+        margin-bottom: 15px;
+    }
+    .artwork-info-section {
+        padding: 0 var(--content-padding-mobile); /* 좌우 패딩 유지 */
+        padding-bottom: var(--artwork-description-bottom-margin-mobile); /* 모바일용 여백 사용 */
+        bottom: var(--pagination-area-height-pc); /* 쪽번호 영역 높이만큼 위로 고정 */
+    }
+    .artwork-title {
+        font-size: 20px; /* 모바일에서 제목 크기 조정 */
+    }
+    .artwork-artist,
+    .artwork-info { /* [수정] artwork-description은 별도로 관리 */
+        font-size: 13px; /* 14px에서 13px로 줄임 */
+    }
+    .artwork-description { /* [추가] artwork-description의 글꼴 크기 재정의 */
+        font-size: 14px;
+    }
+    .page-number {
+        font-size: calc(var(--pagination-default-font-size-pc) * 0.9);
+        gap: 6px;
+        padding: 0 3px;
+    }
+    .page-number.active {
+        font-size: calc(var(--pagination-selected-font-size-pc) * 0.9);
+    }
+    .close-button {
+        font-size: 28px;
+        top: 8px;
+        right: 18px;
+    }
+    .pagination {
+        width: 100vw;
+        padding-left: 20px;
+        padding-right: 20px;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --header-height-pc: 45px;
+        --pagination-area-pc: 55px;
+    }
+    .main-header a {
+        font-size: 14px;
+        padding: 0 10px;
+    }
+    .artwork-display {
+        padding: var(--content-padding-mobile) var(--content-padding-mobile) 5px;
+    }
+    .image-container img {
+        max-height: 35vh; /* 가장 작은 화면에서 이미지 최대 높이 조정 */
+    }
+    #enlarge-button {
+        /* [수정] 더 작은 모바일 버튼 여백 조정 */
+        padding: 6px 12px; /* 패딩 조정 */
+        font-size: 12px;
+        gap: 5px; /* 아이콘과 텍스트 사이 간격 */
+    }
+    .artwork-details {
+        padding-top: 15px;
+        margin-bottom: 10px;
+    }
+    .artwork-info-section {
+        padding-bottom: calc(var(--artwork-description-bottom-margin-mobile) * 0.8); /* 더 작은 모바일에서 80% 줄임 */
+        bottom: var(--pagination-area-height-pc); /* 쪽번호 영역 높이만큼 위로 고정 */
+    }
+    .artwork-title {
+        font-size: 18px; /* 더 작은 화면에서 제목 크기 조정 */
+    }
+    .artwork-artist,
+    .artwork-info { /* [수정] artwork-description은 별도로 관리 */
+        font-size: 12px; /* 13px에서 12px로 줄임 */
+    }
+    .artwork-description { /* [추가] artwork-description의 글꼴 크기 재정의 */
+        font-size: 13px;
+    }
+    .page-number {
+        font-size: calc(var(--pagination-default-font-size-pc) * 0.8);
+        gap: 4px;
+        min-width: 30px;
+    }
+    .page-number.active {
+        font-size: calc(var(--pagination-selected-font-size-pc) * 0.8);
+    }
+    .close-button {
+        font-size: 24px;
+        top: 5px;
+        right: 15px;
+    }
+}
