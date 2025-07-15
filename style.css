@@ -71,21 +71,30 @@ html, body {
     color: var(--text-color-primary);
     background-color: var(--main-outside-bg-color);
     line-height: 1.6;
-    overflow: hidden; /* 전체 브라우저 스크롤 방지 */
+    /*overflow: hidden;  전체 브라우저 스크롤 방지 */
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
+
+
 /* 모든 주요 콘텐츠를 감싸는 중앙 컨테이너 (흰색 배경) */
+
 .gallery-main-container {
     width: 100%;
     max-width: var(--gallery-width-pc);
-    /* [수정] height: 100vh 대신 safe-area-inset을 사용하여 브라우저 UI 영역을 고려합니다. */
-    height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-    /* [추가] env() 미지원 브라우저나 추가적인 공간 확보를 위해 기본 패딩을 추가할 수 있습니다. */
-    padding-top: env(safe-area-inset-top, 20px); /* 상단 브라우저 UI를 위한 여백 (기본 20px) */
-    padding-bottom: env(safe-area-inset-bottom, 20px); /* 하단 브라우저 UI를 위한 여백 (기본 20px) */
+
+    /* [수정 시작] height 관련 설정 */
+    height: 100%; /* 부모(body)의 높이를 따르도록 기본 설정 */
+    height: 100dvh; /* 모바일 UI에 따라 동적으로 변하는 뷰포트 높이 (최신 브라우저 우선 적용) */
+    height: -webkit-fill-available; /* iOS Safari 호환성 추가 */
+    height: fill-available; /* Firefox 호환성 추가 */
+
+    /* [수정] safe-area-inset을 padding에 직접 적용하는 것은 높이 문제에 영향을 줄 수 있으므로 일단 주석 처리 */
+    /* padding-top: env(safe-area-inset-top, 0px); */ 
+    /* padding-bottom: env(safe-area-inset-bottom, 0px); */ 
+    /* [수정 끝] height 관련 설정 */
 
     background-color: var(--inner-content-bg-color);
     box-shadow: 0 0 15px rgba(0,0,0,0.05);
@@ -96,6 +105,8 @@ html, body {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+
 /* For Chrome, Safari and Opera */
 .gallery-main-container::-webkit-scrollbar {
     display: none;
@@ -437,7 +448,7 @@ p.artwork-artist {
 
     /* PC에서는 safe-area-inset이 필요 없으므로 재정의 (초기값으로 복원) */
     .gallery-main-container {
-        height: 100vh;
+        height: 100%;
         padding-top: 0px;
         padding-bottom: 0px;
     }
