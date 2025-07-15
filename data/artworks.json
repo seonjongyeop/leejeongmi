@@ -1,7 +1,7 @@
 [
     {
         "id": 1,
-        "title": "매화와 새마리",
+        "title": "매화와 새 세마리",
         "artist": "이정미",
         "year": 2017,
         "material": "비단에 자수",
@@ -34,7 +34,7 @@
     },
     {
         "id": 4,
-        "title": "Dummy Artwork 4",
+        "title": "Artwork 4",
         "artist": "이정미",
         "year": 2022,
         "material": "비단에 자수",
@@ -45,7 +45,7 @@
     },
     {
         "id": 5,
-        "title": "Dummy Artwork 5",
+        "title": "Artwork 5",
         "artist": "이정미",
         "year": 2022,
         "material": "비단에 자수",
