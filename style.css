@@ -46,7 +46,7 @@
     --font-maruburi: 'MaruBuri', sans-serif;
 
     /* 헤더와 쪽번호 영역의 고정 높이 */
-    --header-height-pc: 60px;
+    --header-height-pc: 80px; /* 60px에서 80px로 수정 */
     --pagination-area-height-pc: 80px;
 
     /* 전반적인 패딩 및 여백 조정 */
@@ -120,7 +120,7 @@ html, body {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    height: var(--header-height-pc);
+    height: var(--header-height-pc); /* 변수 사용 */
     border-bottom: 1px solid var(--border-line-color);
     flex-shrink: 0;
     position: sticky; /* 헤더를 스크롤 최상단에 고정 */
@@ -151,7 +151,7 @@ html, body {
 .main-header a {
     text-decoration: none;
     color: var(--text-color-primary);
-    font-size: 20px;
+    font-size: 24px; /* 20px에서 24px로 키움 */
     font-weight: 700;
     white-space: nowrap;
 }
@@ -493,12 +493,12 @@ p.artwork-artist {
 /* 태블릿 및 작은 PC 화면 */
 @media (max-width: 1200px) {
     :root {
-        --header-height-pc: 55px;
-        --pagination-area-height-pc: 70px;
+        --header-height-pc: 70px; /* 55px에서 70px로 수정 */
+        --pagination-area-height-pc: 70px; /* 70px 유지 */
         --content-padding-pc: 30px;
     }
     .main-header a {
-        font-size: 18px;
+        font-size: 20px; /* 18px에서 20px로 키움 */
     }
     .artist-segment, .website-segment {
         padding: 0 15px;
@@ -545,8 +545,8 @@ p.artwork-artist {
 /* 모바일 환경 */
 @media (max-width: 768px) {
     :root {
-        --header-height-pc: 50px;
-        --pagination-area-pc: 60px;
+        --header-height-pc: 60px; /* 50px에서 60px로 수정 */
+        --pagination-area-pc: 60px; /* 60px 유지 */
         --content-padding-mobile: 15px;
     }
     .main-header {
@@ -557,7 +557,7 @@ p.artwork-artist {
         border-right: 1px solid var(--border-line-color);
     }
     .main-header a {
-        font-size: 16px;
+        font-size: 18px; /* 16px에서 18px로 키움 */
         padding: 0 15px;
     }
     .artwork-display {
@@ -619,11 +619,11 @@ p.artwork-artist {
 
 @media (max-width: 480px) {
     :root {
-        --header-height-pc: 45px;
-        --pagination-area-pc: 55px;
+        --header-height-pc: 55px; /* 45px에서 55px로 수정 */
+        --pagination-area-pc: 55px; /* 55px 유지 */
     }
     .main-header a {
-        font-size: 14px;
+        font-size: 16px; /* 14px에서 16px로 키움 */
         padding: 0 10px;
     }
     .artwork-display {
